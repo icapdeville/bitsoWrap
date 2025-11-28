@@ -8,4 +8,5 @@ A la fecha solo he integrado los endpoints siguientes del Bitso API:
 - /ticker
 - /orders
 - /balance
+- /trades
 
