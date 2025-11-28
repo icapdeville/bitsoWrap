@@ -23,7 +23,7 @@ type WrapperOrderResponse struct {
     ErrorMessage string `json:"error_message,omitempty"`
 }
 
-const SlippagePercent = 0.006
+const SlippagePercent = 0.00066
 
 type OrderParams map[string]string
 

@@ -67,6 +67,7 @@ type TickerPayload struct {
     RollingAverageChange RollingAverageChange `json:"rolling_average_change"`
 }
 
+
 type TickerResponse struct {
 	Success bool          `json:"success"`
 	Payload TickerPayload `json:"payload"`
@@ -77,14 +78,38 @@ type BitsoOrderPayload struct {
 	Oid string `json:"oid"` 
 }
 
+
 type BitsoOrderError struct {
 	Code    string      `json:"code"`
 	Message string      `json:"message"`
 	Details interface{} `json:"details"` 
 }
 
+
 type BitsoOrderResponse struct {
 	Success bool              `json:"success"`
 	Payload *BitsoOrderPayload `json:"payload,omitempty"`
 	Error   *BitsoOrderError   `json:"error,omitempty"`
+}
+
+type UserTradesResponse struct {
+    Success bool       `json:"success"`
+    Payload []UserTrade `json:"payload"`
+}
+
+type UserTrade struct {
+    Book          string `json:"book"`
+    Major         string `json:"major"`
+    Minor         string `json:"minor"`
+    MajorCurrency string `json:"major_currency"`
+    MinorCurrency string `json:"minor_currency"`
+    Price         string `json:"price"`
+    Side          string `json:"side"`
+    MakerSide     string `json:"maker_side"`
+    FeesCurrency  string `json:"fees_currency"`
+    FeesAmount    string `json:"fees_amount"`
+    Tid           string `json:"tid"`
+    Oid           string `json:"oid"`
+    CreatedAt     string `json:"created_at"`
+    OriginID      string `json:"origin_id"`
 }
