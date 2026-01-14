@@ -113,3 +113,26 @@ type UserTrade struct {
     CreatedAt     string `json:"created_at"`
     OriginID      string `json:"origin_id"`
 }
+
+// OpenOrder representa una orden abierta devuelta por /open_orders
+type OpenOrder struct {
+    Book           string  `json:"book"`
+    CreatedAt      string  `json:"created_at"`
+    Oid            string  `json:"oid"`
+    OriginID       *string `json:"origin_id"`
+    OriginalAmount string  `json:"original_amount"`
+    OriginalValue  string  `json:"original_value"`
+    Price          string  `json:"price"`
+    Side           string  `json:"side"`
+    Status         string  `json:"status"`
+    TimeInForce    string  `json:"time_in_force"`
+    Type           string  `json:"type"`
+    UnfilledAmount string  `json:"unfilled_amount"`
+    UpdatedAt      *string `json:"updated_at"`
+}
+
+// OpenOrdersResponse estructura tipada para /open_orders
+type OpenOrdersResponse struct {
+    Success bool        `json:"success"`
+    Payload []OpenOrder `json:"payload"`
+}

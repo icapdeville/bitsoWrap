@@ -12,6 +12,7 @@ func NewRouter() *http.ServeMux {
     mux.HandleFunc("/ticker", handlers.TickerHandler)
 	mux.HandleFunc("/orders", handlers.PlaceOrderHandler)
 	mux.HandleFunc("/user_trades", handlers.GetUserTradesHandler)
+	mux.HandleFunc("/open_orders", handlers.GetOpenOrdersHandler)
 
     return mux
 }
