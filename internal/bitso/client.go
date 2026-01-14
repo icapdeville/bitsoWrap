@@ -142,3 +142,21 @@ func (c *BitsoClient) ListUserTrades(params map[string]string) (*UserTradesRespo
 
 	return &resp, nil
 }
+
+func (c *BitsoClient) GetOpenOrders(params map[string]string) ([]byte, error) {
+	return c.Request("open_orders", "GET", params, true)
+}
+
+func (c *BitsoClient) ListOpenOrders(params map[string]string) (*OpenOrdersResponse, error) {
+	data, err := c.GetOpenOrders(params)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp OpenOrdersResponse
+	if err := json.Unmarshal(data, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
