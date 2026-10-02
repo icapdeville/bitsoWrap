@@ -1,14 +1,20 @@
 package main
 
 import (
-    "log"
-    "net/http"
-    "bitsoWrap/internal/api"
+	"bitsoWrap/internal/api"
+	"log"
+	"net/http"
+	"os"
 )
 
 func main() {
-    router := api.NewRouter()
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-    log.Println("Servidor escuchando en :8080")
-    http.ListenAndServe(":8080", router)
+	router := api.NewRouter()
+
+	log.Printf("Servidor escuchando en :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }

@@ -4,7 +4,8 @@ import (
 	"net/http"
 )
 
-func GetOpenOrdersHandler(w http.ResponseWriter, r *http.Request) {
+// GetFundingsHandler expone /fundings (depósitos). Acepta limit, marker, fids, status, method.
+func GetFundingsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		return
@@ -15,7 +16,7 @@ func GetOpenOrdersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, err := client.ListOpenOrders(queryParams(r))
+	resp, err := client.ListFundings(queryParams(r))
 	if err != nil {
 		respondBitsoError(w, err)
 		return
