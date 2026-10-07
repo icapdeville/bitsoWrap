@@ -17,42 +17,7 @@ func isSnapshotDay(t time.Time) bool {
 	return t.Day() == 15 || t.AddDate(0, 0, 1).Day() == 1
 }
 
-type market struct {
-	bids map[string]decimal.Decimal // book -> bid
-	fees map[string]decimal.Decimal // book -> taker fee (decimal)
-}
-
-func newMarket(tickers []bitso.TickerPayload, fees []bitso.BookFee) market {
-	m := market{bids: map[string]decimal.Decimal{}, fees: map[string]decimal.Decimal{}}
-	for _, t := range tickers {
-		if bid, err := decimal.NewFromString(t.Bid); err == nil && bid.IsPositive() {
-			m.bids[t.Book] = bid
-		}
-	}
-	for _, f := range fees {
-		if fee, err := decimal.NewFromString(f.TakerFeeDecimal); err == nil {
-			m.fees[f.Book] = fee
-		}
-	}
-	return m
-}
-
-// netValue es lo que se recibiría en MXN al vender: bid × (1 − comisión) × total.
-// Si la moneda no tiene libro en MXN se valúa en USD y se convierte con usd_mxn.
-func (m market) netValue(coin string, total decimal.Decimal) (decimal.Decimal, bool) {
-	one := decimal.NewFromInt(1)
-	if bid, ok := m.bids[coin+"_mxn"]; ok {
-		return bid.Mul(one.Sub(m.fees[coin+"_mxn"])).Mul(total).Round(2), true
-	}
-	bid, ok := m.bids[coin+"_usd"]
-	usdMxn, okFx := m.bids["usd_mxn"]
-	if ok && okFx {
-		return bid.Mul(one.Sub(m.fees[coin+"_usd"])).Mul(total).Mul(usdMxn).Round(2), true
-	}
-	return decimal.Zero, false
-}
-
-func (s *Syncer) balanceUpserts(balances []bitso.BalanceItem, m market, fecha string) []store.Upsert {
+func (s *Syncer) balanceUpserts(balances []bitso.BalanceItem, m bitso.Market, fecha string) []store.Upsert {
 	var ups []store.Upsert
 	for _, b := range balances {
 		coin := strings.ToLower(b.Currency)
@@ -63,7 +28,7 @@ func (s *Syncer) balanceUpserts(balances []bitso.BalanceItem, m market, fecha st
 		totalF, _ := total.Round(8).Float64()
 		bitsoDoc := bson.M{"total": totalF}
 		if coin != "mxn" {
-			if neto, ok := m.netValue(coin, total); ok {
+			if neto, _, ok := m.NetValueMXN(coin, total); ok {
 				bitsoDoc["neto"], _ = neto.Float64()
 			} else {
 				log.Printf("sync: sin precio para valuar %s", coin)
@@ -96,7 +61,7 @@ func (s *Syncer) syncBalance(ctx context.Context) error {
 		return err
 	}
 
-	m := newMarket(tickers.Payload, fees.Payload.Fees)
+	m := bitso.NewMarket(tickers.Payload, fees.Payload.Fees)
 	ups := s.balanceUpserts(bal.Payload.Balances, m, now.Format("2006-01-02"))
 	if _, err := s.Store.UpsertMany(ctx, store.Balance, ups); err != nil {
 		return err

@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -88,26 +87,6 @@ func TestIsSnapshotDay(t *testing.T) {
 		if got := isSnapshotDay(tm); got != want {
 			t.Errorf("%s -> %v, se esperaba %v", d, got, want)
 		}
-	}
-}
-
-func TestNetValue(t *testing.T) {
-	m := newMarket(
-		[]bitso.TickerPayload{{Book: "sol_mxn", Bid: "2000"}, {Book: "ada_usd", Bid: "0.5"}, {Book: "usd_mxn", Bid: "18"}},
-		[]bitso.BookFee{{Book: "sol_mxn", TakerFeeDecimal: "0.0078"}, {Book: "ada_usd", TakerFeeDecimal: "0.0036"}},
-	)
-	d := decimal.RequireFromString
-
-	// 2000 × (1 − 0.0078) × 0.5 = 992.20
-	if v, ok := m.netValue("sol", d("0.5")); !ok || !v.Equal(d("992.2")) {
-		t.Errorf("sol = %s", v)
-	}
-	// 0.5 × (1 − 0.0036) × 100 × 18 = 896.76
-	if v, ok := m.netValue("ada", d("100")); !ok || !v.Equal(d("896.76")) {
-		t.Errorf("ada = %s", v)
-	}
-	if _, ok := m.netValue("gnt", d("1")); ok {
-		t.Error("una moneda sin libro no debe tener neto")
 	}
 }
 

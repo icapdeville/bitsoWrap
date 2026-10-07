@@ -12,6 +12,8 @@ A la fecha solo he integrado los endpoints siguientes del Bitso API:
 - /open_orders
 - /fundings (depósitos)
 - /withdrawals (retiros)
+- /saldo y /saldos: saldo total y por moneda valuado en MXN (ver abajo)
+- /health: estado del servicio, sin token ni llamada a Bitso (`{"status":"ok","credenciales":"ok"}`)
 
 Variables de entorno: ver `.env.example`.
 
@@ -36,3 +38,43 @@ go run ./cmd/sync -full      # recorre todo el historial
 go run ./cmd/sync -balance   # fuerza el snapshot de saldos
 docker compose up -d --build bitso-sync   # servicio diario a SYNC_TIME
 ```
+
+## Saldos en MXN (`/saldo`, `/saldos`)
+
+Calculados en vivo: bid × (1 − comisión del libro) × saldo; monedas sin libro en MXN se valúan vía USD.
+Si no se mandan `X-API-KEY`/`X-API-SECRET` se usa la key de `.env`; con `WRAPPER_TOKEN` definido hay
+que mandar `X-Wrapper-Token`. La respuesta se cachea 60 s.
+
+```
+GET /saldo   -> {"success":true,"fecha":"...","total_mxn":12361.97}
+GET /saldos  -> {"success":true,"fecha":"...","total_mxn":12361.97,
+                 "saldos":[{"coin":"sol","saldo":0.57627225,"disponible":0.57627225,
+                            "precio_mxn":2143.24,"saldo_mxn":1225.46}, ...]}
+```
+
+`/saldo/historial?desde=AAAA-MM-DD` suma por fecha los snapshots de la colección `balance`
+(día 15 y fin de mes; `neto` de cada moneda, `total` del MXN). Mismo token que `/saldo`.
+
+```
+GET /saldo/historial?desde=2025-11-01
+    -> {"success":true,"data":[{"fecha":"2026-09-15","total_mxn":11980.4}, ...]}
+```
+
+
+## Wallets fuera de Bitso (`/wallets/{wallet}`)
+
+Cantidades capturadas a mano por wallet (`cold`, `mp`, …; colección `wallets`), valuadas
+con los tickers públicos de Bitso al bid, sin comisión. Por moneda (ver `bitso.WalletBooks`):
+BTC con `btc_mxn`, SOL con `sol_mxn`, XRP con `xrp_usd` × `usd_mxn`; cualquier otra con
+`<coin>_mxn` o `<coin>_usd` (el USD sale de `usd_mxn`).
+El PUT exige `X-Wrapper-Token` siempre; sin `WRAPPER_TOKEN` en `.env` no se puede escribir.
+
+```
+PUT /wallets/cold  {"btc":0.05,"sol":12,"xrp":350}   # fija esas monedas; 0 la quita
+GET /wallets/cold  -> {"success":true,"fecha":"...","total_mxn":...,
+                       "saldos":[{"coin":"btc","saldo":0.05,"libro":"btc_mxn","precio_mxn":...,"saldo_mxn":...}]}
+GET /wallets/cold/historial?desde=AAAA-MM-DD   # snapshots de wallets_balance
+```
+
+`bitso-sync` guarda la valuación de cada wallet en `wallets_balance` los mismos días que el
+snapshot de saldos (15 y fin de mes, o con `-balance`).

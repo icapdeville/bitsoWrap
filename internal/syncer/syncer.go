@@ -47,6 +47,7 @@ func (s *Syncer) Run(ctx context.Context) error {
 		{"abonos", s.syncFundings},
 		{"retiros", s.syncWithdrawals},
 		{"balance", s.syncBalance},
+		{"wallets", s.syncWallets},
 	}
 	for _, step := range steps {
 		if err := step.fn(ctx); err != nil {
